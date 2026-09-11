@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}VulnLab{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">VulnLab</a>
+
+        {% if g.user %}
+            <a href="{{ url_for('notes.index') }}">My Notes</a>
+            {% if g.user['role'] == 'admin' %}
+                <a href="{{ url_for('admin.index') }}">Admin</a>
+            {% endif %}
+            <span>
+                {{ g.user['username'] }} ({{ g.user['role'] }})
+            </span>
+            <a href="{{ url_for('auth.logout') }}">Log out</a>
+        {% else %}
+            <a href="{{ url_for('auth.register') }}">Register</a>
+            <a href="{{ url_for('auth.login') }}">Log in</a>
+        {% endif %}
+    </nav>
+
+    {% for message in get_flashed_messages() %}
+        <p>{{ message }}</p>
+    {% endfor %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
