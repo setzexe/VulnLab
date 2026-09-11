@@ -1,0 +1,54 @@
+from flask import session
+from werkzeug.security import check_password_hash
+from app.db import get_db
+
+
+def test_register(client, app):
+    response = client.post("/auth/register",
+        data={
+            "username": "charlie",
+            "password": "securepass123",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/auth/login")
+
+    with app.app_context():
+        user = get_db().execute(
+            "SELECT * FROM user WHERE username = ?",
+            ("charlie",),
+        ).fetchone()
+
+        assert user is not None
+        assert user["password_hash"] != "securepass123"
+        assert check_password_hash(
+            user["password_hash"],
+            "securepass123",
+        )
+
+
+def test_duplicate_username(client):
+    response = client.post("/auth/register",
+        data={
+            "username": "alice",
+            "password": "anotherpass123",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"already registered" in response.data
+
+
+def test_login_and_logout(client, auth):
+    with client:
+        response = auth.login()
+
+        assert response.status_code == 200
+        assert session["user_id"] == 1
+        assert b"alice" in response.data
+
+        response = auth.logout()
+
+        assert "user_id" not in session
+        assert b"Log in" in response.data

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}{{ note['title'] }} | VulnLab{% endblock %}
+
+{% block content %}
+    <h1>{{ note['title'] }}</h1>
+    <p>{{ note['body'] }}</p>
+    <small>{{ note['created_at'] }}</small>
+{% endblock %}

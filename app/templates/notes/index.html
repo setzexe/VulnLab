@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}My Notes | VulnLab{% endblock %}
+
+{% block content %}
+    <h1>My Notes</h1>
+    <a href="{{ url_for('notes.create') }}">Create note</a>
+
+    {% for note in notes %}
+        <article>
+            <h2>
+                <a href="{{ url_for('notes.detail', note_id=note['id']) }}">
+                    {{ note['title'] }}
+                </a>
+            </h2>
+            <p>{{ note['created_at'] }}</p>
+        </article>
+    {% else %}
+        <p>You have no notes yet.</p>
+    {% endfor %}
+{% endblock %}
