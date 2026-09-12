@@ -1,0 +1,20 @@
+services:
+  vulnlab:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      VULNLAB_SECRET_KEY: ${VULNLAB_SECRET_KEY:-local-docker-dev-key}
+    volumes:
+      - vulnlab-data:/app/instance
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  vulnlab-data:
+  
