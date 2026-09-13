@@ -90,7 +90,10 @@ def detail(note_id):
     if note is None:
         abort(404)
 
-    if note["owner_id"] != g.user["id"]:
-        abort(403)
+    # The code below enforces that only the owner of a note can see their own note
+    # By commenting it out, we showcase IDOR.
+    # Authentication is required, but authorization is not.
+    # Any loggin in user can see another user's note by changing the URL ID.
+    # if note["owner_id"] != g.user["id"]: abort(403)
 
     return render_template("notes/detail.html", note=note)
