@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Search Notes | VulnLab{% endblock %}
+
+{% block content %}
+    <h1>Search Notes</h1>
+
+    <form method="get">
+        <label for="q">Search by title</label>
+        <input
+            id="q"
+            name="q"
+            value="{{ search_term }}"
+        >
+        <button type="submit">Search</button>
+    </form>
+
+    {% for note in notes %}
+        <article>
+            <h2>{{ note["title"] }}</h2>
+            <p>{{ note["body"] }}</p>
+            <small>
+                Note ID: {{ note["id"] }} |
+                Owner ID: {{ note["owner_id"] }}
+            </small>
+        </article>
+    {% else %}
+        <p>No matching notes found.</p>
+    {% endfor %}
+{% endblock %}

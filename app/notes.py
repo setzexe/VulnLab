@@ -51,6 +51,30 @@ def create():
 
     return render_template("notes/create.html")
 
+@bp.get("/search")
+@login_required
+def search():
+    search_term = request.args.get("q", "")
+
+    # SQL Injection Vulnerability:
+    # User input is directly added into the SQL statement.
+    # The attacker can start with ' to force the query to break, and add their own SQL code.
+    query = f"""
+        SELECT id, owner_id, title, body, created_at
+        FROM note
+        WHERE owner_id = {g.user["id"]} 
+          AND title LIKE '%{search_term}%' 
+        ORDER BY created_at DESC, id DESC
+    """
+
+    notes = get_db().execute(query).fetchall()
+
+    return render_template(
+        "notes/search.html",
+        notes=notes,
+        search_term=search_term,
+    )
+
 @bp.get("/<int:note_id>")
 @login_required
 def detail(note_id):
