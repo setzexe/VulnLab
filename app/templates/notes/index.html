@@ -6,6 +6,12 @@
     <h1>My Notes</h1>
     <a href="{{ url_for('notes.create') }}">Create note</a>
 
+    <form action="{{ url_for('notes.search') }}" method="get">
+        <label for="q">Search notes</label>
+        <input id="q" name="q">
+        <button type="submit">Search</button>
+    </form>
+
     {% for note in notes %}
         <article>
             <h2>
