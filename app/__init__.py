@@ -17,10 +17,11 @@ def create_app(test_config=None):
     from . import db # PREVENTS INFINITE IMPORT LOOP
     db.init_app(app)
 
-    from . import auth, admin, notes
+    from . import auth, admin, notes, debug
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(notes.bp)
+    app.register_blueprint(debug.bp)
 
     @app.get("/")
     def index():
