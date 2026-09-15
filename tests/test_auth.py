@@ -1,6 +1,7 @@
 from flask import session
 from werkzeug.security import check_password_hash
 from app.db import get_db
+import pytest
 
 
 def test_register(client, app):
@@ -52,3 +53,22 @@ def test_login_and_logout(client, auth):
 
         assert "user_id" not in session
         assert b"Log in" in response.data
+
+@pytest.mark.xfail(reason="Weak passwords are intentionally allowed for Card #8 demonstration", strict=True)
+def test_registration_rejects_weak_password(client, app):
+    response = client.post("/auth/register",
+        data={
+            "username": "weak_auth_user",
+            "password": "letmein",
+        },
+    )
+
+    assert response.status_code == 200
+
+    with app.app_context():
+        user = get_db().execute(
+            "SELECT * FROM user WHERE username = ?",
+            ("weak_auth_user",),
+        ).fetchone()
+
+        assert user is None
