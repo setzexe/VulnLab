@@ -3,7 +3,6 @@ from werkzeug.security import check_password_hash
 from app.db import get_db
 import pytest
 
-
 def test_register(client, app):
     response = client.post("/auth/register",
         data={
@@ -28,7 +27,6 @@ def test_register(client, app):
             "securepass123",
         )
 
-
 def test_duplicate_username(client):
     response = client.post("/auth/register",
         data={
@@ -39,7 +37,6 @@ def test_duplicate_username(client):
     )
 
     assert b"already registered" in response.data
-
 
 def test_login_and_logout(client, auth):
     with client:

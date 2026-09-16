@@ -3,7 +3,6 @@ from werkzeug.security import generate_password_hash
 from app import create_app
 from app.db import get_db, init_db
 
-
 @pytest.fixture
 def app(tmp_path):
     database_path = tmp_path / "test.sqlite"
@@ -50,11 +49,9 @@ def app(tmp_path):
 
     yield app
 
-
 @pytest.fixture
 def client(app):
     return app.test_client()
-
 
 class AuthActions:
     def __init__(self, client):
@@ -68,7 +65,6 @@ class AuthActions:
 
     def logout(self):
         return self.client.get("/auth/logout", follow_redirects=True)
-
 
 @pytest.fixture
 def auth(client):

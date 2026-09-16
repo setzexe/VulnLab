@@ -55,19 +55,18 @@ def create():
 @login_required
 def search():
     search_term = request.args.get("q", "")
+    search_pattern = f"%{search_term}%"
 
-    # SQL Injection Vulnerability:
-    # User input is directly added into the SQL statement.
-    # The attacker can start with ' to force the query to break, and add their own SQL code.
-    query = f"""
+    notes = get_db().execute(
+        """
         SELECT id, owner_id, title, body, created_at
         FROM note
-        WHERE owner_id = {g.user["id"]} 
-          AND title LIKE '%{search_term}%' 
+        WHERE owner_id = ?
+          AND title LIKE ?
         ORDER BY created_at DESC, id DESC
-    """
-
-    notes = get_db().execute(query).fetchall()
+        """,
+        (g.user["id"], search_pattern),
+    ).fetchall()
 
     return render_template(
         "notes/search.html",
@@ -90,10 +89,7 @@ def detail(note_id):
     if note is None:
         abort(404)
 
-    # The code below enforces that only the owner of a note can see their own note
-    # By commenting it out, we showcase IDOR.
-    # Authentication is required, but authorization is not.
-    # Any loggin in user can see another user's note by changing the URL ID.
-    # if note["owner_id"] != g.user["id"]: abort(403)
+    if note["owner_id"] != g.user["id"]: 
+        abort(403)
 
     return render_template("notes/detail.html", note=note)
