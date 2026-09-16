@@ -20,11 +20,10 @@ def create_app(test_config=None):
     limiter.init_app(app)
     db.init_app(app)
     
-    from . import auth, admin, notes, debug
+    from . import auth, admin, notes
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(notes.bp)
-    app.register_blueprint(debug.bp)
 
     @app.get("/")
     def index():

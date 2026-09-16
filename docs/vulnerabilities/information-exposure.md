@@ -2,7 +2,7 @@
 
 ## Status
 
-Intentionally vulnerable for local testing. Remediation and regression testing are planned for issue #10.
+Remediated in card #10. The intentionally vulnerable base app is preserved under the `v0.1.0-vulnerable` Git tag.
 
 ## Summary
 
@@ -160,44 +160,28 @@ The `/health` endpoint also only showcases:
 - [CWE-215 — Insertion of Sensitive Information Into Debugging Code](https://cwe.mitre.org/data/definitions/215.html)
 - [CWE-200 — Exposure of Sensitive Information to an Unauthorized Actor](https://cwe.mitre.org/data/definitions/200.html)
 
-## Planned Remediation
+## Remediation
 
-Issue #10 will remove the exposed diagnostic blueprint from the application.
+Card #10 removed the diagnostic endpoint completely:
 
-The secured application will:
+- `app/debug.py` was deleted.
+- The debug blueprint import and registration was removed.
+- `/debug/config` now returns `404 Not Found`.
 
-- Remove `/debug/config`
-- Keep `/health` limited to a basic status response
-- Avoid returning configuration objects to users
-- Continue loading the secret key through application configuration
-- Require deployment secrets to come from the environment
-- Avoid committing real secrets to the repository
+Restricting the endpoint to administrators would not have been enough. Application secrets should not be returned through HTTP responses at all.
 
-Protecting the diagnostic route with authentication would not work entirely. These sensitive secrets should not be returned through an HTTP endpoint at all.
+## Regression Test
 
-## Regression Test Plan
+The `test_debug_config_is_not_exposed` regression test confirms that:
 
-The current regression test defines the secure requirement:
+- `/debug/config` returns `404 Not Found`.
 
-```python
-@pytest.mark.xfail(reason="Diagnostic config is intentionally exposed for card #9", strict=True)
-def test_debug_config_is_not_exposed(client):
-    response = client.get("/debug/config")
-    assert response.status_code == 404
-    assert b"test-key" not in response.data
-```
-
-During issue #10:
-
-- The diagnostic endpoint will be removed.
-- The `xfail` marker will be removed.
-- `/debug/config` will return `404 Not Found`.
-- The test configuration secret will not appear in the response.
-- The PoC will fail because the exposed endpoint no longer exists.
+The original information-exposure PoC now exits unsuccessfully when it receives the `404` response.
 
 ## Before and After
 
-| State      | Diagnostic Endpoint | Sensitive Values                      | Result              |
-| ---------- | ------------------- | ------------------------------------- | ------------------- |
-| Vulnerable | Publicly accessible | Secret key and database path returned | Information exposed |
-| Remediated | Removed             | No configuration returned             | Pending issue #10   |
+| State      | Diagnostic Endpoint | Sensitive Values                      | Result                           |
+| ---------- | ------------------- | ------------------------------------- | -------------------------------- |
+| Vulnerable | Publicly accessible | Secret key and database path returned | Information exposed              |
+| Remediated | Removed             | No configuration returned             | Request receives `404 Not Found` |
+

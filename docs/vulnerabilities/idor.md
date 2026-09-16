@@ -2,7 +2,7 @@
 
 ## Status
 
-Intentionally vulnerable for isolated testing. Remediation and normal regression testing additions are planned for issue #10.
+Remediated in card #10. The intentionally vulnerable base app is preserved under the `v0.1.0-vulnerable` Git tag.
 
 ## Summary
 
@@ -134,9 +134,9 @@ The demonstration does not cause administrator access, database modification, op
 - [OWASP Top 10:2021 — A01: Broken Access Control](https://top10.owasp.org/2021/A01_2021-Broken_Access_Control/)
 - [OWASP Insecure Direct Object Reference Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html)
 
-## Planned Remediation
+## Remediation
 
-Issue #10 will restore server side ownership validation:
+Card #10 restored server side ownership authorization:
 
 ```python
 if note is None:
@@ -148,43 +148,22 @@ if note["owner_id"] != g.user["id"]:
 return render_template("notes/detail.html", note=note)
 ```
 
-The note ID may still be user controlled, but access will depend on both:
+The note ID remains user controlled, but access now depends on the authenticated user owning the requested note. Authentication confirms who the user is. The ownership comparison checks whether that user may access that specific note.
 
-- The requested note
-- The authenticated user’s ownership of that note
+## Regression Test
 
-## Regression Test Plan
+The `test_idor_is_blocked` regression test:
 
-A regression test already showcases the intended security requirement:
+- Authenticates as Alice.
+- Requests a note belonging to Bob.
+- Confirms the response is `403 Forbidden`.
+- Confirms Bob’s private note body is absent.
 
-```python
-def test_idor_is_blocked(client, auth):
-    auth.login("alice")
-
-    response = client.get("/notes/2")
-
-    assert response.status_code == 403
-    assert b"Bob private body" not in response.data
-```
-
-During the intentionally vulnerable phase, we mark this test with `xfail`:
-
-```python
-@pytest.mark.xfail(reason="IDOR intentionally present during vulnerable lab phase", strict=True)
-```
-
-The expected failure shows that the vulnerability is known and intentional.
-
-During issue #10:
-
-- The ownership check will be restored.
-- The `xfail` marker will be removed.
-- The same test will pass normally.
-- The automated PoC will no longer retrieve the victim’s marker.
+The test passes normally. The original IDOR PoC now receives `403 Forbidden` instead of the victim’s note.
 
 ## Before and After
 
-| State      | Authorization Behavior                                 | Result                                |
-| ---------- | ------------------------------------------------------ | ------------------------------------- |
-| Vulnerable | Note existence is checked, but ownership is not        | Attacker receives another user’s note |
-| Remediated | The note owner is compared with the authenticated user | Pending issue #10                     |
+| State      | Authorization Behavior                              | Result                                |
+| ---------- | --------------------------------------------------- | ------------------------------------- |
+| Vulnerable | Note existence checked without ownership validation | Attacker receives another user’s note |
+| Remediated | Note owner compared with authenticated user         | Non owner receives `403 Forbidden`    |

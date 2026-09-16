@@ -2,7 +2,7 @@
 
 ## Status
 
-Intentionally vulnerable for local testing. Remediation and regression are planned for issue #10.
+Remediated in card #10. The intentionally vulnerable base app is preserved under the `v0.1.0-vulnerable` Git tag.
 
 ## Summary
 
@@ -103,9 +103,9 @@ The demonstration does not cause database modification, deletion, operating syst
 - [OWASP Top 10:2021 — A03: Injection](https://top10.owasp.org/2021/A03_2021-Injection/)
 - [CWE-89 — Improper Neutralization of Special Elements Used in an SQL Command](https://cwe.mitre.org/data/definitions/89.html)
 
-## Planned Remediation
+## Remediation
 
-Issue #10 will replace dynamic SQL construction with a parameterized query:
+Card #10 replaced the dynamic SQL construction with a parameterized query:
 
 ```python
 search_pattern = f"%{search_term}%"
@@ -122,32 +122,21 @@ notes = get_db().execute(
 ).fetchall()
 ```
 
-The percent signs remain part of the search value, but SQLite receives the SQL instructions and user data separately.
+SQLite now receives the SQL instructions separately from the search data. Characters such as `'`, `--`, and `OR` become part of the search value instead of the SQL syntax.
 
-Even if the user adds:
+## Regression Test
 
-```text
-%' OR 1=1 -- 
-```
+The `test_search_blocks_sql_injection` regression test showcases:
 
-SQLite treats that entire payload as regular search text rather than executable SQL.
+- A legitimate search still returns the authenticated user’s matching note.
+- Another user’s note is not returned.
+- The original SQL injection data does not expose another user’s title / body.
 
-## Regression Test Plan
-
-The security regression test added during issue #10 will:
-
-1. Create two fictional users.
-2. Create a private note belonging to the victim.
-3. Authenticate as the attacker.
-4. Submit the original SQL injection payload.
-5. Confirm the response does not contain the victim’s evidence marker.
-6. Confirm the attacker can still perform legitimate searches against their own notes.
-
-This will ensure that remediation blocks the exploit without breaking the intended search feature.
+The original PoC now exits unsuccessfully because the victim’s data marker is not returned.
 
 ## Before and After
 
-| State      | Query Construction                       | Result                                   |
-| ---------- | ---------------------------------------- | ---------------------------------------- |
-| Vulnerable | User input inserted through an f-string  | Injected search returns other user notes |
-| Remediated | SQL placeholders and separate parameters | Pending issue #10                        |
+| State      | Query Construction                       | Result                                                           |
+| ---------- | ---------------------------------------- | ---------------------------------------------------------------- |
+| Vulnerable | User input inserted through an f-string  | Injected search returns other users’ notes                       |
+| Remediated | SQL placeholders and separate parameters | Payload is treated as text and other users’ notes remain private |
