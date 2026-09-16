@@ -1,16 +1,12 @@
 import functools
 import sqlite3
-
 from flask import (Blueprint, flash, g, redirect, render_template, 
     request, session, url_for, abort)
-
 from werkzeug.security import check_password_hash, generate_password_hash
-
 from .db import get_db
-
+from app.extension import limiter
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
-
 
 @bp.route("/register", methods=("GET", "POST"))
 def register():
@@ -23,10 +19,8 @@ def register():
             error = "Username is required."
         elif not password:
             error = "Password is required."
-
-        # Removing this to demonstrate password length validation is necessary
-        # elif len(password) < 8:
-        #     error = "Password must contain at least 8 characters."
+        elif len(password) < 8:
+           error = "Password must contain at least 8 characters."
 
         if error is None:
             try:
@@ -50,6 +44,7 @@ def register():
 
 
 @bp.route("/login", methods=("GET", "POST"))
+@limiter.limit("5 per minute")
 def login():
     if request.method == "POST":
         username = request.form["username"].strip()
