@@ -184,4 +184,3 @@ The original information-exposure PoC now exits unsuccessfully when it receives 
 | ---------- | ------------------- | ------------------------------------- | -------------------------------- |
 | Vulnerable | Publicly accessible | Secret key and database path returned | Information exposed              |
 | Remediated | Removed             | No configuration returned             | Request receives `404 Not Found` |
-

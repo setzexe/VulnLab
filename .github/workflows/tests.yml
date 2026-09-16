@@ -1,4 +1,4 @@
-name: Python tests
+name: Security pipeline
 
 on:
   push:
@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   test:
+    name: Python tests
     runs-on: ubuntu-latest
 
     steps:
@@ -23,10 +24,75 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install application dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Run pytest
         run: python -m pytest -v
+
+  static-analysis:
+    name: Bandit static analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install bandit
+
+      - name: Scan Python application
+        run: bandit -r app -ll
+
+  dependency-audit:
+    name: Python dependency audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-audit
+
+      - name: Audit application dependencies
+        run: pip-audit -r requirements.txt --progress-spinner off
+  
+  container-security:
+    name: Docker build with Trivy scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build --pull --tag vulnlab:${{ github.sha }} .
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: "vulnlab:${{ github.sha }}"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "HIGH,CRITICAL"
