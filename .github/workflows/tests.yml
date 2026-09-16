@@ -75,3 +75,24 @@ jobs:
 
       - name: Audit application dependencies
         run: pip-audit -r requirements.txt --progress-spinner off
+  
+  container-security:
+    name: Docker build with Trivy scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build --pull --tag vulnlab:${{ github.sha }} .
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: "vulnlab:${{ github.sha }}"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "HIGH,CRITICAL"
