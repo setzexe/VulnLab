@@ -2,7 +2,7 @@
 
 ## Status
 
-Intentionally vulnerable for local testing. Remediation and regression testing are planned on card #10.
+Remediated in card #10. The intentionally vulnerable base app is preserved under the `v0.1.0-vulnerable` Git tag.
 
 ## Summary
 
@@ -109,7 +109,7 @@ Every submitted password is processed regardless of how many previous attempts f
 
 1. A victim registers with a predictable password.
 2. The attacker learns / guesses the victim’s username.
-3. The attacker submits common passwords to the registration.
+3. The attacker submits common passwords to the login route.
 4. VulnLab processes every attempt without restriction.
 5. One password matches the victim’s password hash.
 6. VulnLab creates an authenticated session for the attacker.
@@ -141,55 +141,49 @@ Passwords are also stored as PBKDF2 hashes rather than plaintext.
 - [CWE-521 — Weak Password Requirements](https://cwe.mitre.org/data/definitions/521.html)
 - [CWE-307 — Improper Restriction of Excessive Authentication Attempts](https://cwe.mitre.org/data/definitions/307.html)
 
-## Planned Remediation
+## Remediation
 
-Issue #10 will strengthen both parts of the authentication. Registration will reject predictable passwords through server side password requirements, and login will restrict repeated failures using a focused rate limiting or temporary lockout control. Excessive attempts should eventually receive a response such as:
+Card #10 hardened both parts of the authentication flow. Registration now enforces a server side minimum password length:
+
+```python
+elif len(password) < 8:
+    error = "Password must contain at least 8 characters."
+```
+
+The registration form also includes `minlength="8"` as a browser side hint. The Python validation is the actual security control.
+
+Login requests are limited with Flask-Limiter:
+
+```python
+@bp.route("/login", methods=("GET", "POST"))
+@limiter.limit("5 per minute", methods=["POST"])
+def login():
+```
+
+The local lab uses in mmemory rate limit storage. A multi process public deployment would require shared storage such as Redis.
+
+Only login submissions are counted. The first five requests from a client IP are processed, while another request inside the same window receives:
 
 ```http
 HTTP/1.1 429 Too Many Requests
 ```
 
-Password hashing and generic login error messages will remain enabled.
+PBKDF2 password hashing and generic login error messages remain enabled.
 
-## Regression Test Plan
+## Regression Tests
 
-The current regression test defines the secure registration requirement:
+Two security regression tests verify:
 
-```python
-@pytest.mark.xfail(
-    reason="Weak passwords are intentionally allowed for the Card #8 demonstration",
-    strict=True,
-)
-def test_registration_rejects_weak_password(client, app):
-    response = client.post(
-        "/auth/register",
-        data={
-            "username": "weak_auth_user",
-            "password": "letmein",
-        },
-    )
+- `test_registration_rejects_weak_password` confirms that `letmein` is rejected and no account is created.
+- `test_repeated_login_attempts_are_limited` confirms that excessive login requests receive `429 Too Many Requests`.
 
-    assert response.status_code == 200
+Both tests pass normally without `xfail` markers.
 
-    with app.app_context():
-        user = get_db().execute(
-            "SELECT * FROM user WHERE username = ?",
-            ("weak_auth_user",),
-        ).fetchone()
-
-        assert user is None
-```
-
-During issue #10:
-
-- Server-side password requirements will be restored.
-- The `xfail` marker will be removed and the weak password test will pass normally.
-- Another regression test will confirm that excessive failed login attempts are restricted.
-- The PoC will no longer successfully create or compromise the weak account.
+The original PoC now stops when VulnLab refuses to create the predictable-password victim account.
 
 ## Before and After
 
-| State      | Password Behavior              | Login Attempt Behavior        | Result                     |
-| ---------- | ------------------------------ | ----------------------------- | -------------------------- |
-| Vulnerable | Predictable passwords accepted | Attempts are unrestricted     | Dictionary attack succeeds |
-| Remediated | Weak passwords rejected        | Excessive attempts restricted | Pending issue #10          |
+| State      | Password Behavior              | Login Attempt Behavior           | Result                           |
+| ---------- | ------------------------------ | -------------------------------- | -------------------------------- |
+| Vulnerable | Predictable passwords accepted | Attempts unrestricted            | Dictionary attack succeeds       |
+| Remediated | Weak passwords rejected        | Excessive attempts receive `429` | Original attack chain is blocked |

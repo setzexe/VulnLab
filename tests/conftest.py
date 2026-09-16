@@ -2,7 +2,7 @@ import pytest
 from werkzeug.security import generate_password_hash
 from app import create_app
 from app.db import get_db, init_db
-
+from app.extension import limiter
 
 @pytest.fixture
 def app(tmp_path):
@@ -17,6 +17,7 @@ def app(tmp_path):
     )
 
     with app.app_context():
+        limiter.reset()
         init_db()
 
         password_hash = generate_password_hash("password123", method="pbkdf2:sha256",)
@@ -50,11 +51,9 @@ def app(tmp_path):
 
     yield app
 
-
 @pytest.fixture
 def client(app):
     return app.test_client()
-
 
 class AuthActions:
     def __init__(self, client):
@@ -68,7 +67,6 @@ class AuthActions:
 
     def logout(self):
         return self.client.get("/auth/logout", follow_redirects=True)
-
 
 @pytest.fixture
 def auth(client):

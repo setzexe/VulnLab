@@ -1,13 +1,10 @@
 from app.db import get_db
-import pytest
-
 
 def test_notes_require_login(client):
     response = client.get("/notes/")
 
     assert response.status_code == 302
     assert "/auth/login" in response.headers["Location"]
-
 
 def test_user_sees_only_own_notes(client, auth):
     auth.login("alice")
@@ -17,7 +14,6 @@ def test_user_sees_only_own_notes(client, auth):
     assert response.status_code == 200
     assert b"Alice note" in response.data
     assert b"Bob note" not in response.data
-
 
 def test_create_note(client, auth, app):
     auth.login("alice")
@@ -42,7 +38,6 @@ def test_create_note(client, auth, app):
         assert note is not None
         assert note["owner_id"] == 1
 
-
 def test_owner_can_view_note(client, auth):
     auth.login("alice")
 
@@ -51,8 +46,6 @@ def test_owner_can_view_note(client, auth):
     assert response.status_code == 200
     assert b"Alice private body" in response.data
 
-
-@pytest.mark.xfail(reason="IDOR intentionally allowed during development", strict=True)
 def test_idor_is_blocked(client, auth):
     auth.login("alice")
 
@@ -60,7 +53,6 @@ def test_idor_is_blocked(client, auth):
 
     assert response.status_code == 403
     assert b"Bob private body" not in response.data
-
 
 def test_admin_route_requires_admin(client, auth):
     auth.login("alice")
@@ -77,3 +69,21 @@ def test_admin_route_requires_admin(client, auth):
     assert b"alice" in response.data
     assert b"bob" in response.data
     assert b"admin" in response.data
+
+def test_search_blocks_sql_injection(client, auth):
+    auth.login("alice")
+    control_response = client.get(
+        "/notes/search", query_string={"q": "Alice"},
+    )
+
+    assert control_response.status_code == 200
+    assert b"Alice note" in control_response.data
+    assert b"Bob note" not in control_response.data
+
+    exploit_response = client.get(
+        "/notes/search", query_string={ "q": "%' OR 1=1 -- "},
+    )
+
+    assert exploit_response.status_code == 200
+    assert b"Bob note" not in exploit_response.data
+    assert b"Bob private body" not in exploit_response.data
