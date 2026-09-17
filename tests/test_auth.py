@@ -85,3 +85,8 @@ def test_repeated_login_attempts_are_limited(client):
         },
     )
     assert blocked_response.status_code == 429
+
+def test_login_page_views_do_not_consume_rate_limit(client):
+    for _ in range(6):
+        response = client.get("/auth/login")
+        assert response.status_code == 200

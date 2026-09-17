@@ -44,7 +44,7 @@ def register():
 
 
 @bp.route("/login", methods=("GET", "POST"))
-@limiter.limit("5 per minute")
+@limiter.limit("5 per minute", methods=["POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"].strip()
