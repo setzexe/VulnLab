@@ -32,6 +32,14 @@ git switch main
 git pull
 ```
 
+Generate the runtime secret in the current terminal:
+
+```bash
+export VULNLAB_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+```
+
+Reuse this secret when restarting the application. Check out [Deployment preparation](deployment-preparation.md).
+
 Build + start VulnLab:
 
 ```bash

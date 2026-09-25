@@ -61,12 +61,28 @@ git clone https://github.com/setzexe/VulnLab.git
 cd VulnLab
 ```
 
-Start the application and initialize the database:
+Generate a runtime session secret in the current terminal:
 
 ```bash
-docker compose up -d --build
+export VULNLAB_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+```
+
+Build and start the application and Redis:
+
+```bash
+docker compose up -d --build --wait
+```
+
+On first use with an empty database, initialize its tables:
+
+```bash
 docker compose exec vulnlab python -m flask --app run init-db
 ```
+
+The init-db command drops and recreates application tables. Don't rerun this against data you want to keep.
+
+Check out [Deployment preparation](docs/deployment-preparation.md)
+for configuration, storage behavior, and verification.
 
 Open:
 
