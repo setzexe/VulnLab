@@ -5,7 +5,7 @@ services:
     ports:
       - "127.0.0.1:5000:5000"
     environment:
-      VULNLAB_SECRET_KEY: ${VULNLAB_SECRET_KEY:-local-docker-dev-key}
+      VULNLAB_SECRET_KEY: ${VULNLAB_SECRET_KEY:?Set VULNLAB_SECRET_KEY before starting VulnLab}
     volumes:
       - vulnlab-data:/app/instance
     healthcheck:
