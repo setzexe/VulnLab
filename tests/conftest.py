@@ -4,6 +4,10 @@ from app import create_app
 from app.db import get_db, init_db
 from app.extension import limiter
 
+@pytest.fixture(autouse=True)
+def isolate_rate_limit_storage(monkeypatch):
+    monkeypatch.setenv("VULNLAB_RATELIMIT_STORAGE_URI", "memory://")
+
 @pytest.fixture
 def app(tmp_path):
     database_path = tmp_path / "test.sqlite"

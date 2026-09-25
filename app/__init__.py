@@ -7,7 +7,9 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("VULNLAB_SECRET_KEY"),
         DATABASE=os.path.join(app.instance_path, "vulnlab.sqlite"),
-        RATELIMIT_STORAGE_URI="memory://"
+        RATELIMIT_STORAGE_URI=os.environ.get("VULNLAB_RATELIMIT_STORAGE_URI", "memory://"),
+        RATELIMIT_SWALLOW_ERRORS=False,
+        RATELIMIT_IN_MEMORY_FALLBACK_ENABLED=False,
     )
 
     if test_config is not None:
