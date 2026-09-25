@@ -1,7 +1,10 @@
 from app import create_app
 
 def test_health_endpoint():
-    app = create_app({"TESTING": True})
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "test-key",
+    })
     client = app.test_client()
     response = client.get("/health")
     assert response.status_code == 200

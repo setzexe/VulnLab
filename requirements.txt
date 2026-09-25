@@ -1,5 +1,5 @@
 Flask
 pytest
 requests
-Flask-Limiter
-
+Flask-Limiter[redis]
+gunicorn

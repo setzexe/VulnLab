@@ -5,13 +5,20 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
 
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get("VULNLAB_SECRET_KEY", "dev-key"),
+        SECRET_KEY=os.environ.get("VULNLAB_SECRET_KEY"),
         DATABASE=os.path.join(app.instance_path, "vulnlab.sqlite"),
-        RATELIMIT_STORAGE_URI="memory://"
+        RATELIMIT_STORAGE_URI=os.environ.get("VULNLAB_RATELIMIT_STORAGE_URI", "memory://"),
+        RATELIMIT_SWALLOW_ERRORS=False,
+        RATELIMIT_IN_MEMORY_FALLBACK_ENABLED=False,
     )
 
     if test_config is not None:
         app.config.update(test_config)
+
+    secret_key = app.config.get("SECRET_KEY")
+
+    if not secret_key or (not app.testing and len(secret_key) < 32):
+        raise RuntimeError("VULNLAB_SECRET_KEY must contain at least 32 characters.")
 
     os.makedirs(app.instance_path, exist_ok=True)
 
