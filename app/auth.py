@@ -5,6 +5,7 @@ from flask import (Blueprint, flash, g, redirect, render_template,
 from werkzeug.security import check_password_hash, generate_password_hash
 from .db import get_db
 from app.extension import limiter
+from .security_events import log_login_failure
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -66,6 +67,7 @@ def login():
             session["user_id"] = user["id"]
             return redirect(url_for("index"))
 
+        log_login_failure()
         flash(error)
 
     return render_template("auth/login.html")
