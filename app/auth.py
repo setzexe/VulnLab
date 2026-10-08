@@ -43,7 +43,6 @@ def register():
 
     return render_template("auth/register.html")
 
-
 @bp.route("/login", methods=("GET", "POST"))
 @limiter.limit("5 per minute", methods=["POST"])
 def login():
@@ -72,12 +71,10 @@ def login():
 
     return render_template("auth/login.html")
 
-
 @bp.get("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
-
 
 @bp.before_app_request
 def load_logged_in_user():
@@ -90,7 +87,6 @@ def load_logged_in_user():
             "SELECT id, username, role FROM user WHERE id = ?",
             (user_id,),
         ).fetchone()
-
 
 def login_required(view):
     @functools.wraps(view)
