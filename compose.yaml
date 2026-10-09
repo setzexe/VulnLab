@@ -20,7 +20,7 @@ services:
       start_period: 5s
 
   redis:
-    image: redis:7.4.11-alpine
+    image: redis:7.4.11-bookworm
     command:
       - redis-server
       - --appendonly
