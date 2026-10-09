@@ -100,7 +100,7 @@ jobs:
       - name: Scan Redis image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: "redis:7.4.11-alpine"
+          image-ref: "redis:7.4.11-bookworm"
           format: "table"
           exit-code: "1"
           ignore-unfixed: true
